@@ -114,9 +114,14 @@ ob_start();
     <!-- Recent Sales -->
     <div class="col-lg-7">
         <div class="dashboard-card">
-            <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--text-primary);">
-                📋 Recent Transactions
-            </h3>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 style="font-size: 1.25rem; font-weight: 700; margin: 0; color: var(--text-primary);">
+                    📋 Recent Transactions
+                </h3>
+                <a href="transactions.php" class="btn btn-outline-primary btn-sm">
+                     View All
+                </a>
+            </div>
             <?php if (count($recentSales) > 0): ?>
                 <div class="table-responsive">
                     <table class="table table-hover">
