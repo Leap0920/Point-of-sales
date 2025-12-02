@@ -16,12 +16,27 @@ $flashMessage = null;
 $categoriesStmt = $pdo->query('SELECT id, name FROM categories WHERE is_active = 1 ORDER BY name');
 $categories = $categoriesStmt->fetchAll();
 
-// Handle delete
+// Handle delete (soft delete - mark as inactive)
 if (isset($_GET['delete'])) {
     $id = (int)$_GET['delete'];
-    $stmt = $pdo->prepare('DELETE FROM products WHERE id = :id');
-    $stmt->execute([':id' => $id]);
-    $flashMessage = ['type' => 'success', 'text' => 'Product deleted successfully.'];
+    
+    // Check if product has been used in sales
+    $checkStmt = $pdo->prepare('SELECT COUNT(*) FROM sale_items WHERE product_id = :id');
+    $checkStmt->execute([':id' => $id]);
+    $salesCount = $checkStmt->fetchColumn();
+    
+    if ($salesCount > 0) {
+        // Product has sales history, mark as inactive instead of deleting
+        $stmt = $pdo->prepare('UPDATE products SET is_active = 0 WHERE id = :id');
+        $stmt->execute([':id' => $id]);
+        $flashMessage = ['type' => 'warning', 'text' => 'Product has sales history and has been deactivated instead of deleted.'];
+    } else {
+        // No sales history, safe to delete
+        $stmt = $pdo->prepare('DELETE FROM products WHERE id = :id');
+        $stmt->execute([':id' => $id]);
+        $flashMessage = ['type' => 'success', 'text' => 'Product deleted successfully.'];
+    }
+    
     header('Location: products.php');
     exit;
 }
@@ -80,12 +95,22 @@ if (isset($_GET['edit'])) {
     $editProduct = $stmt->fetch();
 }
 
+// Handle reactivate
+if (isset($_GET['reactivate'])) {
+    $id = (int)$_GET['reactivate'];
+    $stmt = $pdo->prepare('UPDATE products SET is_active = 1 WHERE id = :id');
+    $stmt->execute([':id' => $id]);
+    $flashMessage = ['type' => 'success', 'text' => 'Product reactivated successfully.'];
+    header('Location: products.php');
+    exit;
+}
+
 // List products with category name
 $productsStmt = $pdo->query('
     SELECT p.*, c.name AS category_name 
     FROM products p 
     JOIN categories c ON p.category_id = c.id 
-    ORDER BY p.name
+    ORDER BY p.is_active DESC, p.name
 ');
 $products = $productsStmt->fetchAll();
 
