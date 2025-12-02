@@ -736,10 +736,16 @@ ob_start();
                                 <span class="product-stock"><?= $product['stock'] ?> left</span>
                             <?php endif; ?>
                             <div class="product-icon">
-                                <?php
-                                $icons = ['🍔', '🍕', '🍗', '🥤', '🍰', '🍜', '🍱', '🌮', '🍦', '☕'];
-                                echo $icons[$product['id'] % count($icons)];
-                                ?>
+                                <?php if (!empty($product['image'])): ?>
+                                    <img src="images/products/<?= htmlspecialchars($product['image']) ?>" 
+                                         alt="<?= htmlspecialchars($product['name']) ?>"
+                                         style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;">
+                                <?php else: ?>
+                                    <?php
+                                    $icons = ['🍔', '🍕', '🍗', '🥤', '🍰', '🍜', '🍱', '🌮', '🍦', '☕'];
+                                    echo $icons[$product['id'] % count($icons)];
+                                    ?>
+                                <?php endif; ?>
                             </div>
                             <div class="product-name"><?= htmlspecialchars($product['name']) ?></div>
                             <div class="product-price">₱<?= number_format($product['price'], 2) ?></div>

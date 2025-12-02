@@ -47,37 +47,85 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['name'] ?? '');
     $category_id = (int)($_POST['category_id'] ?? 0);
     $price = (float)($_POST['price'] ?? 0);
-    $cost = ($_POST['cost'] === '' ? null : (float)$_POST['cost']);
     $stock = (int)($_POST['stock'] ?? 0);
     $is_active = isset($_POST['is_active']) ? 1 : 0;
+    
+    // Handle image upload
+    $imageName = null;
+    if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+        $uploadDir = __DIR__ . '/images/products/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+        
+        $fileInfo = pathinfo($_FILES['image']['name']);
+        $extension = strtolower($fileInfo['extension']);
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
+        
+        if (in_array($extension, $allowedExtensions) && $_FILES['image']['size'] <= 2 * 1024 * 1024) {
+            $imageName = uniqid() . '.' . $extension;
+            $uploadPath = $uploadDir . $imageName;
+            
+            if (!move_uploaded_file($_FILES['image']['tmp_name'], $uploadPath)) {
+                $flashMessage = ['type' => 'danger', 'text' => 'Failed to upload image.'];
+                $imageName = null;
+            }
+        } else {
+            $flashMessage = ['type' => 'danger', 'text' => 'Invalid image file. Please use JPG, PNG, or GIF under 2MB.'];
+        }
+    }
 
     if ($name === '' || $category_id === 0 || $price <= 0) {
         $flashMessage = ['type' => 'danger', 'text' => 'Name, category, and price are required.'];
     } else {
         if ($id > 0) {
-            $stmt = $pdo->prepare('UPDATE products 
-                SET name = :name, category_id = :category_id, price = :price, cost = :cost, stock = :stock, is_active = :is_active 
-                WHERE id = :id');
-            $stmt->execute([
-                ':name' => $name,
-                ':category_id' => $category_id,
-                ':price' => $price,
-                ':cost' => $cost,
-                ':stock' => $stock,
-                ':is_active' => $is_active,
-                ':id' => $id,
-            ]);
+            // Update existing product
+            if ($imageName) {
+                // Delete old image if exists
+                $oldImageStmt = $pdo->prepare('SELECT image FROM products WHERE id = :id');
+                $oldImageStmt->execute([':id' => $id]);
+                $oldImage = $oldImageStmt->fetchColumn();
+                if ($oldImage && file_exists(__DIR__ . '/images/products/' . $oldImage)) {
+                    unlink(__DIR__ . '/images/products/' . $oldImage);
+                }
+                
+                $stmt = $pdo->prepare('UPDATE products 
+                    SET name = :name, category_id = :category_id, price = :price, stock = :stock, is_active = :is_active, image = :image 
+                    WHERE id = :id');
+                $stmt->execute([
+                    ':name' => $name,
+                    ':category_id' => $category_id,
+                    ':price' => $price,
+                    ':stock' => $stock,
+                    ':is_active' => $is_active,
+                    ':image' => $imageName,
+                    ':id' => $id,
+                ]);
+            } else {
+                $stmt = $pdo->prepare('UPDATE products 
+                    SET name = :name, category_id = :category_id, price = :price, stock = :stock, is_active = :is_active 
+                    WHERE id = :id');
+                $stmt->execute([
+                    ':name' => $name,
+                    ':category_id' => $category_id,
+                    ':price' => $price,
+                    ':stock' => $stock,
+                    ':is_active' => $is_active,
+                    ':id' => $id,
+                ]);
+            }
             $flashMessage = ['type' => 'success', 'text' => 'Product updated successfully.'];
         } else {
-            $stmt = $pdo->prepare('INSERT INTO products (name, category_id, price, cost, stock, is_active) 
-                VALUES (:name, :category_id, :price, :cost, :stock, :is_active)');
+            // Create new product
+            $stmt = $pdo->prepare('INSERT INTO products (name, category_id, price, stock, is_active, image) 
+                VALUES (:name, :category_id, :price, :stock, :is_active, :image)');
             $stmt->execute([
                 ':name' => $name,
                 ':category_id' => $category_id,
                 ':price' => $price,
-                ':cost' => $cost,
                 ':stock' => $stock,
                 ':is_active' => $is_active,
+                ':image' => $imageName,
             ]);
             $flashMessage = ['type' => 'success', 'text' => 'Product created successfully.'];
         }
@@ -124,7 +172,7 @@ ob_start();
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title mb-4"><?= $editProduct ? '✏️ Edit Product' : '➕ Add New Product' ?></h5>
-                <form method="post">
+                <form method="post" enctype="multipart/form-data">
                     <input type="hidden" name="id" value="<?= htmlspecialchars($editProduct['id'] ?? 0) ?>">
 
                     <div class="mb-3">
@@ -132,6 +180,20 @@ ob_start();
                         <input type="text" class="form-control" id="name" name="name"
                                value="<?= htmlspecialchars($editProduct['name'] ?? '') ?>" 
                                placeholder="e.g., Chicken Burger" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="image" class="form-label fw-semibold">Product Image</label>
+                        <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                        <?php if ($editProduct && !empty($editProduct['image'])): ?>
+                            <div class="mt-2">
+                                <small class="text-muted">Current image:</small><br>
+                                <img src="images/products/<?= htmlspecialchars($editProduct['image']) ?>" 
+                                     alt="Current product image" 
+                                     style="max-width: 100px; max-height: 100px; object-fit: cover; border-radius: 8px;">
+                            </div>
+                        <?php endif; ?>
+                        <div class="form-text">Upload a product image (JPG, PNG, GIF). Max size: 2MB</div>
                     </div>
 
                     <div class="mb-3">
@@ -150,20 +212,11 @@ ob_start();
                         <?php endif; ?>
                     </div>
 
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="price" class="form-label fw-semibold">Price (₱)</label>
-                            <input type="number" step="0.01" class="form-control" id="price" name="price"
-                                   value="<?= htmlspecialchars($editProduct['price'] ?? '') ?>" 
-                                   placeholder="0.00" required>
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-                            <label for="cost" class="form-label fw-semibold">Cost (₱)</label>
-                            <input type="number" step="0.01" class="form-control" id="cost" name="cost"
-                                   value="<?= htmlspecialchars($editProduct['cost'] ?? '') ?>"
-                                   placeholder="Optional">
-                        </div>
+                    <div class="mb-3">
+                        <label for="price" class="form-label fw-semibold">Price (₱)</label>
+                        <input type="number" step="0.01" class="form-control" id="price" name="price"
+                               value="<?= htmlspecialchars($editProduct['price'] ?? '') ?>" 
+                               placeholder="0.00" required>
                     </div>
 
                     <div class="mb-3">
@@ -203,6 +256,7 @@ ob_start();
                         <thead class="table-light">
                             <tr>
                                 <th style="width: 60px;">ID</th>
+                                <th style="width: 80px;">Image</th>
                                 <th>Product Name</th>
                                 <th>Category</th>
                                 <th style="width: 100px;">Price</th>
@@ -216,6 +270,17 @@ ob_start();
                                 <?php foreach ($products as $prod): ?>
                                     <tr>
                                         <td><span class="badge bg-secondary">#<?= htmlspecialchars($prod['id']) ?></span></td>
+                                        <td>
+                                            <?php if (!empty($prod['image'])): ?>
+                                                <img src="images/products/<?= htmlspecialchars($prod['image']) ?>" 
+                                                     alt="<?= htmlspecialchars($prod['name']) ?>"
+                                                     style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px;">
+                                            <?php else: ?>
+                                                <div style="width: 50px; height: 50px; background: var(--bg-light); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                                                    📦
+                                                </div>
+                                            <?php endif; ?>
+                                        </td>
                                         <td><strong><?= htmlspecialchars($prod['name']) ?></strong></td>
                                         <td><span class="badge bg-info"><?= htmlspecialchars($prod['category_name']) ?></span></td>
                                         <td><strong>₱<?= number_format($prod['price'], 2) ?></strong></td>
