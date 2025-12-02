@@ -16,6 +16,16 @@ $flashMessage = null;
 $categoriesStmt = $pdo->query('SELECT id, name FROM categories WHERE is_active = 1 ORDER BY name');
 $categories = $categoriesStmt->fetchAll();
 
+// Handle delete
+if (isset($_GET['delete'])) {
+    $id = (int)$_GET['delete'];
+    $stmt = $pdo->prepare('DELETE FROM products WHERE id = :id');
+    $stmt->execute([':id' => $id]);
+    $flashMessage = ['type' => 'success', 'text' => 'Product deleted successfully.'];
+    header('Location: products.php');
+    exit;
+}
+
 // Handle create/update
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
@@ -56,6 +66,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ]);
             $flashMessage = ['type' => 'success', 'text' => 'Product created successfully.'];
         }
+        header('Location: products.php');
+        exit;
     }
 }
 
@@ -79,96 +91,155 @@ $products = $productsStmt->fetchAll();
 
 ob_start();
 ?>
-<div class="row">
-    <div class="col-md-5">
-        <h1 class="h4 mb-3"><?= $editProduct ? 'Edit Product' : 'Add Product' ?></h1>
-        <form method="post">
-            <input type="hidden" name="id" value="<?= htmlspecialchars($editProduct['id'] ?? 0) ?>">
-
-            <div class="mb-3">
-                <label for="name" class="form-label">Name</label>
-                <input type="text" class="form-control" id="name" name="name"
-                       value="<?= htmlspecialchars($editProduct['name'] ?? '') ?>" required>
-            </div>
-
-            <div class="mb-3">
-                <label for="category_id" class="form-label">Category</label>
-                <select class="form-select" id="category_id" name="category_id" required>
-                    <option value="">Select category</option>
-                    <?php foreach ($categories as $cat): ?>
-                        <option value="<?= $cat['id'] ?>"
-                            <?= isset($editProduct['category_id']) && (int)$editProduct['category_id'] === (int)$cat['id'] ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($cat['name']) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-
-            <div class="mb-3">
-                <label for="price" class="form-label">Price</label>
-                <input type="number" step="0.01" class="form-control" id="price" name="price"
-                       value="<?= htmlspecialchars($editProduct['price'] ?? '') ?>" required>
-            </div>
-
-            <div class="mb-3">
-                <label for="cost" class="form-label">Cost (optional)</label>
-                <input type="number" step="0.01" class="form-control" id="cost" name="cost"
-                       value="<?= htmlspecialchars($editProduct['cost'] ?? '') ?>">
-            </div>
-
-            <div class="mb-3">
-                <label for="stock" class="form-label">Stock</label>
-                <input type="number" class="form-control" id="stock" name="stock"
-                       value="<?= htmlspecialchars($editProduct['stock'] ?? 0) ?>" required>
-            </div>
-
-            <div class="form-check mb-3">
-                <input class="form-check-input" type="checkbox" value="1" id="is_active" name="is_active"
-                    <?= (!isset($editProduct['is_active']) || $editProduct['is_active']) ? 'checked' : '' ?>>
-                <label class="form-check-label" for="is_active">
-                    Active
-                </label>
-            </div>
-
-            <button type="submit" class="btn btn-primary"><?= $editProduct ? 'Update' : 'Save' ?></button>
-            <?php if ($editProduct): ?>
-                <a href="products.php" class="btn btn-secondary ms-2">Cancel</a>
-            <?php endif; ?>
-        </form>
-        <p class="mt-3">
-            Manage categories here: <a href="categories.php">Categories</a>
-        </p>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">📦 Products</h1>
+        <p class="page-subtitle">Manage your menu items and inventory</p>
     </div>
-    <div class="col-md-7">
-        <h1 class="h4 mb-3">Product List</h1>
-        <table class="table table-striped table-bordered">
-            <thead>
-            <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Category</th>
-                <th>Price</th>
-                <th>Stock</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-            </thead>
-            <tbody>
-            <?php foreach ($products as $prod): ?>
-                <tr>
-                    <td><?= htmlspecialchars($prod['id']) ?></td>
-                    <td><?= htmlspecialchars($prod['name']) ?></td>
-                    <td><?= htmlspecialchars($prod['category_name']) ?></td>
-                    <td><?= number_format($prod['price'], 2) ?></td>
-                    <td><?= htmlspecialchars($prod['stock']) ?></td>
-                    <td><?= $prod['is_active'] ? 'Active' : 'Inactive' ?></td>
-                    <td>
-                        <a href="products.php?edit=<?= $prod['id'] ?>" class="btn btn-sm btn-outline-primary">Edit</a>
-                    </td>
-                </tr>
-            <?php endforeach; ?>
-            </tbody>
-        </table>
+    <a href="categories.php" class="btn btn-outline-primary">
+        📁 Manage Categories
+    </a>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title mb-4"><?= $editProduct ? '✏️ Edit Product' : '➕ Add New Product' ?></h5>
+                <form method="post">
+                    <input type="hidden" name="id" value="<?= htmlspecialchars($editProduct['id'] ?? 0) ?>">
+
+                    <div class="mb-3">
+                        <label for="name" class="form-label fw-semibold">Product Name</label>
+                        <input type="text" class="form-control" id="name" name="name"
+                               value="<?= htmlspecialchars($editProduct['name'] ?? '') ?>" 
+                               placeholder="e.g., Chicken Burger" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="category_id" class="form-label fw-semibold">Category</label>
+                        <select class="form-select" id="category_id" name="category_id" required>
+                            <option value="">Select category</option>
+                            <?php foreach ($categories as $cat): ?>
+                                <option value="<?= $cat['id'] ?>"
+                                    <?= isset($editProduct['category_id']) && (int)$editProduct['category_id'] === (int)$cat['id'] ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($cat['name']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <?php if (count($categories) === 0): ?>
+                            <div class="form-text text-danger">⚠️ Please create a category first</div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="price" class="form-label fw-semibold">Price (₱)</label>
+                            <input type="number" step="0.01" class="form-control" id="price" name="price"
+                                   value="<?= htmlspecialchars($editProduct['price'] ?? '') ?>" 
+                                   placeholder="0.00" required>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="cost" class="form-label fw-semibold">Cost (₱)</label>
+                            <input type="number" step="0.01" class="form-control" id="cost" name="cost"
+                                   value="<?= htmlspecialchars($editProduct['cost'] ?? '') ?>"
+                                   placeholder="Optional">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="stock" class="form-label fw-semibold">Stock Quantity</label>
+                        <input type="number" class="form-control" id="stock" name="stock"
+                               value="<?= htmlspecialchars($editProduct['stock'] ?? 0) ?>" required>
+                        <div class="form-text">Current inventory count</div>
+                    </div>
+
+                    <div class="form-check form-switch mb-4">
+                        <input class="form-check-input" type="checkbox" value="1" id="is_active" name="is_active" role="switch"
+                            <?= (!isset($editProduct['is_active']) || $editProduct['is_active']) ? 'checked' : '' ?>>
+                        <label class="form-check-label fw-semibold" for="is_active">
+                            Active Status
+                        </label>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <?= $editProduct ? '💾 Update Product' : '➕ Create Product' ?>
+                        </button>
+                        <?php if ($editProduct): ?>
+                            <a href="products.php" class="btn btn-outline-secondary">Cancel</a>
+                        <?php endif; ?>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title mb-4">📋 All Products (<?= count($products) ?>)</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 60px;">ID</th>
+                                <th>Product Name</th>
+                                <th>Category</th>
+                                <th style="width: 100px;">Price</th>
+                                <th style="width: 80px;">Stock</th>
+                                <th style="width: 100px;">Status</th>
+                                <th style="width: 100px;" class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (count($products) > 0): ?>
+                                <?php foreach ($products as $prod): ?>
+                                    <tr>
+                                        <td><span class="badge bg-secondary">#<?= htmlspecialchars($prod['id']) ?></span></td>
+                                        <td><strong><?= htmlspecialchars($prod['name']) ?></strong></td>
+                                        <td><span class="badge bg-info"><?= htmlspecialchars($prod['category_name']) ?></span></td>
+                                        <td><strong>₱<?= number_format($prod['price'], 2) ?></strong></td>
+                                        <td>
+                                            <?php if ($prod['stock'] <= 5): ?>
+                                                <span class="badge bg-warning text-dark"><?= htmlspecialchars($prod['stock']) ?></span>
+                                            <?php else: ?>
+                                                <span class="badge bg-success"><?= htmlspecialchars($prod['stock']) ?></span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <?php if ($prod['is_active']): ?>
+                                                <span class="badge bg-success">✓ Active</span>
+                                            <?php else: ?>
+                                                <span class="badge bg-secondary">✗ Inactive</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="text-end">
+                                            <a href="products.php?edit=<?= $prod['id'] ?>" class="btn btn-sm btn-outline-primary">
+                                                ✏️ Edit
+                                            </a>
+                                            <a href="products.php?delete=<?= $prod['id'] ?>" 
+                                               class="btn btn-sm btn-outline-danger"
+                                               onclick="return confirm('Are you sure you want to delete this product?')">
+                                                🗑️ Delete
+                                            </a>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="7" class="text-center py-5 text-muted">
+                                        <div class="mb-3" style="font-size: 3rem;">📦</div>
+                                        <p class="mb-0">No products yet. Add your first product!</p>
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 <?php

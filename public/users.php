@@ -71,7 +71,10 @@ $roles = $pdo->query('SELECT * FROM roles ORDER BY name')->fetchAll();
 ob_start();
 ?>
 <div class="page-header">
-    <h1 class="page-title">User Management</h1>
+    <div>
+        <h1 class="page-title">👥 User Management</h1>
+        <p class="page-subtitle">Manage system users and their access levels</p>
+    </div>
     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
         ➕ Add New User
     </button>
@@ -79,55 +82,65 @@ ob_start();
 
 <?php if ($flashMessage): ?>
     <div class="alert alert-<?= $flashMessage['type'] ?> alert-dismissible fade show">
+        <strong><?= $flashMessage['type'] === 'success' ? '✓' : '⚠️' ?></strong>
         <?= htmlspecialchars($flashMessage['message']) ?>
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 <?php endif; ?>
 
 <div class="card">
-    <div class="table-responsive">
-        <table class="table table-hover">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Username</th>
-                    <th>Role</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($users as $user): ?>
+    <div class="card-body">
+        <h5 class="card-title mb-4">📋 All Users (<?= count($users) ?>)</h5>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
                     <tr>
-                        <td><?= $user['id'] ?></td>
-                        <td><?= htmlspecialchars($user['name']) ?></td>
-                        <td><?= htmlspecialchars($user['username']) ?></td>
-                        <td><span class="badge bg-info"><?= htmlspecialchars($user['role_name']) ?></span></td>
-                        <td>
-                            <?php if ($user['is_active']): ?>
-                                <span class="badge bg-success">Active</span>
-                            <?php else: ?>
-                                <span class="badge bg-secondary">Inactive</span>
-                            <?php endif; ?>
-                        </td>
-                        <td>
-                            <button class="btn btn-sm btn-outline-primary" onclick="editUser(<?= htmlspecialchars(json_encode($user)) ?>)">
-                                ✏️ Edit
-                            </button>
-                            <form method="POST" style="display: inline;">
-                                <input type="hidden" name="action" value="toggle">
-                                <input type="hidden" name="id" value="<?= $user['id'] ?>">
-                                <button type="submit" class="btn btn-sm btn-outline-warning" 
-                                        onclick="return confirm('Toggle user status?')">
-                                    <?= $user['is_active'] ? '🔒 Deactivate' : '🔓 Activate' ?>
-                                </button>
-                            </form>
-                        </td>
+                        <th style="width: 60px;">ID</th>
+                        <th>Name</th>
+                        <th>Username</th>
+                        <th style="width: 120px;">Role</th>
+                        <th style="width: 100px;">Status</th>
+                        <th style="width: 200px;" class="text-end">Actions</th>
                     </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    <?php foreach ($users as $user): ?>
+                        <tr>
+                            <td><span class="badge bg-secondary">#<?= $user['id'] ?></span></td>
+                            <td><strong><?= htmlspecialchars($user['name']) ?></strong></td>
+                            <td><code><?= htmlspecialchars($user['username']) ?></code></td>
+                            <td>
+                                <?php if ($user['role_name'] === 'Admin'): ?>
+                                    <span class="badge bg-danger">👨‍💼 Admin</span>
+                                <?php else: ?>
+                                    <span class="badge bg-info">👤 Cashier</span>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <?php if ($user['is_active']): ?>
+                                    <span class="badge bg-success">✓ Active</span>
+                                <?php else: ?>
+                                    <span class="badge bg-secondary">✗ Inactive</span>
+                                <?php endif; ?>
+                            </td>
+                            <td class="text-end">
+                                <button class="btn btn-sm btn-outline-primary" onclick="editUser(<?= htmlspecialchars(json_encode($user)) ?>)">
+                                    ✏️ Edit
+                                </button>
+                                <form method="POST" style="display: inline;" id="toggleForm<?= $user['id'] ?>">
+                                    <input type="hidden" name="action" value="toggle">
+                                    <input type="hidden" name="id" value="<?= $user['id'] ?>">
+                                    <button type="button" class="btn btn-sm btn-outline-<?= $user['is_active'] ? 'warning' : 'success' ?>" 
+                                            onclick="customConfirm('Are you sure you want to <?= $user['is_active'] ? 'deactivate' : 'activate' ?> this user?', function(yes) { if(yes) document.getElementById('toggleForm<?= $user['id'] ?>').submit(); })">
+                                        <?= $user['is_active'] ? '🔒' : '🔓' ?>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
