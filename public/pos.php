@@ -1,0 +1,633 @@
+<?php
+
+require __DIR__ . '/../app/auth_only.php';
+require __DIR__ . '/../app/Auth.php';
+require __DIR__ . '/../app/Database.php';
+
+$pdo = Database::getConnection();
+$pageTitle = 'Point of Sale';
+$flashMessage = null;
+
+$currentUser = Auth::user();
+
+// Get all active categories
+$categories = $pdo->query('SELECT * FROM categories WHERE is_active = 1 ORDER BY name')->fetchAll();
+
+// Get all active products with category info
+$products = $pdo->query('SELECT p.*, c.name as category_name 
+                         FROM products p 
+                         JOIN categories c ON p.category_id = c.id 
+                         WHERE p.is_active = 1 
+                         ORDER BY c.name, p.name')->fetchAll();
+
+// Get today's sales for this cashier
+$todaySales = $pdo->prepare('SELECT COUNT(*) as count, COALESCE(SUM(total_amount), 0) as total
+                             FROM sales 
+                             WHERE user_id = :user_id AND DATE(created_at) = :today');
+$todaySales->execute([
+    ':user_id' => $currentUser['id'],
+    ':today' => date('Y-m-d')
+]);
+$cashierStats = $todaySales->fetch();
+
+ob_start();
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS - Cashier Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            overflow: hidden;
+        }
+        
+        .pos-wrapper {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .pos-header {
+            background: white;
+            padding: 1rem 1.5rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .pos-header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .cashier-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .cashier-stats {
+            text-align: right;
+        }
+        
+        .cashier-stats small {
+            display: block;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+        }
+        
+        .cashier-stats strong {
+            color: var(--primary-color);
+            font-size: 1.1rem;
+        }
+        
+        .pos-main {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 420px;
+            gap: 0;
+            overflow: hidden;
+        }
+        
+        .products-section {
+            background: var(--bg-light);
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+        
+        .category-filter {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .category-btn {
+            padding: 0.5rem 1rem;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        
+        .category-btn:hover, .category-btn.active {
+            border-color: var(--primary-color);
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 1rem;
+        }
+        
+        .product-card {
+            background: white;
+            border-radius: var(--border-radius-sm);
+            padding: 1.25rem;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            text-align: center;
+            position: relative;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        }
+        
+        .product-card.out-of-stock {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .product-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .product-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+        
+        .product-price {
+            color: var(--primary-color);
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        
+        .product-stock {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: var(--warning-gradient);
+            color: white;
+            font-size: 0.7rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+        
+        .cart-section {
+            background: white;
+            display: flex;
+            flex-direction: column;
+            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .cart-header {
+            padding: 1.5rem;
+            border-bottom: 2px solid var(--bg-light);
+        }
+        
+        .cart-header h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin: 0;
+        }
+        
+        .cart-items {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem 1.5rem;
+        }
+        
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: var(--bg-light);
+            border-radius: var(--border-radius-sm);
+            margin-bottom: 0.75rem;
+        }
+        
+        .cart-item-info {
+            flex: 1;
+        }
+        
+        .cart-item-name {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        
+        .cart-item-price {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .cart-item-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .qty-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: var(--transition);
+        }
+        
+        .qty-btn:hover {
+            background: var(--primary-dark);
+        }
+        
+        .qty-display {
+            font-weight: 700;
+            min-width: 30px;
+            text-align: center;
+        }
+        
+        .remove-btn {
+            background: #fc8181;
+            color: white;
+            border: none;
+            padding: 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .cart-summary {
+            padding: 1.5rem;
+            border-top: 2px solid var(--bg-light);
+        }
+        
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+            font-size: 1rem;
+        }
+        
+        .summary-row.total {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            padding-top: 0.75rem;
+            border-top: 2px solid var(--bg-light);
+        }
+        
+        .checkout-btn {
+            width: 100%;
+            padding: 1rem;
+            background: var(--success-gradient);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius-sm);
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-top: 1rem;
+        }
+        
+        .checkout-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(67, 233, 123, 0.4);
+        }
+        
+        .checkout-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .clear-cart-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: white;
+            color: #e53e3e;
+            border: 2px solid #e53e3e;
+            border-radius: var(--border-radius-sm);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-top: 0.5rem;
+        }
+        
+        .clear-cart-btn:hover {
+            background: #e53e3e;
+            color: white;
+        }
+        
+        .empty-cart {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-secondary);
+        }
+        
+        .empty-cart-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+        
+        @media (max-width: 992px) {
+            .pos-main {
+                grid-template-columns: 1fr;
+            }
+            
+            .cart-section {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                max-height: 60vh;
+                z-index: 1000;
+            }
+            
+            .products-section {
+                padding-bottom: 60vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="pos-wrapper">
+        <!-- POS Header -->
+        <div class="pos-header">
+            <div>
+                <h1>🏪 Point of Sale</h1>
+                <small style="color: var(--text-secondary);">Cashier: <?= htmlspecialchars($currentUser['name']) ?></small>
+            </div>
+            <div class="cashier-info">
+                <div class="cashier-stats">
+                    <small>Today's Sales</small>
+                    <strong>₱<?= number_format($cashierStats['total'], 2) ?></strong>
+                    <small><?= (int)$cashierStats['count'] ?> transactions</small>
+                </div>
+                <a href="logout.php" class="btn btn-outline-danger btn-sm">🚪 Logout</a>
+            </div>
+        </div>
+        
+        <!-- POS Main Content -->
+        <div class="pos-main">
+            <!-- Products Section -->
+            <div class="products-section">
+                <div class="category-filter">
+                    <button class="category-btn active" data-category="all">All Products</button>
+                    <?php foreach ($categories as $cat): ?>
+                        <button class="category-btn" data-category="<?= $cat['id'] ?>">
+                            <?= htmlspecialchars($cat['name']) ?>
+                        </button>
+                    <?php endforeach; ?>
+                </div>
+                
+                <div class="product-grid" id="productGrid">
+                    <?php foreach ($products as $product): ?>
+                        <div class="product-card <?= $product['stock'] <= 0 ? 'out-of-stock' : '' ?>" 
+                             data-category="<?= $product['category_id'] ?>"
+                             data-product='<?= json_encode([
+                                 'id' => $product['id'],
+                                 'name' => $product['name'],
+                                 'price' => $product['price'],
+                                 'stock' => $product['stock']
+                             ]) ?>'>
+                            <?php if ($product['stock'] <= 5 && $product['stock'] > 0): ?>
+                                <span class="product-stock"><?= $product['stock'] ?> left</span>
+                            <?php endif; ?>
+                            <div class="product-icon">
+                                <?php
+                                $icons = ['🍔', '🍕', '🍗', '🥤', '🍰', '🍜', '🍱', '🌮', '🍦', '☕'];
+                                echo $icons[$product['id'] % count($icons)];
+                                ?>
+                            </div>
+                            <div class="product-name"><?= htmlspecialchars($product['name']) ?></div>
+                            <div class="product-price">₱<?= number_format($product['price'], 2) ?></div>
+                            <?php if ($product['stock'] <= 0): ?>
+                                <small style="color: #e53e3e;">Out of Stock</small>
+                            <?php endif; ?>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+            
+            <!-- Cart Section -->
+            <div class="cart-section">
+                <div class="cart-header">
+                    <h2>🛒 Current Order</h2>
+                </div>
+                
+                <div class="cart-items" id="cartItems">
+                    <div class="empty-cart">
+                        <div class="empty-cart-icon">🛒</div>
+                        <p>Cart is empty<br><small>Click on products to add them</small></p>
+                    </div>
+                </div>
+                
+                <div class="cart-summary">
+                    <div class="summary-row">
+                        <span>Subtotal:</span>
+                        <span id="subtotal">₱0.00</span>
+                    </div>
+                    <div class="summary-row total">
+                        <span>Total:</span>
+                        <span id="total">₱0.00</span>
+                    </div>
+                    
+                    <button class="checkout-btn" id="checkoutBtn" disabled>
+                        💳 Checkout
+                    </button>
+                    <button class="clear-cart-btn" id="clearCartBtn" style="display: none;">
+                        🗑️ Clear Cart
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Cart management
+        let cart = [];
+        
+        // Category filtering
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                const category = this.dataset.category;
+                document.querySelectorAll('.product-card').forEach(card => {
+                    if (category === 'all' || card.dataset.category === category) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        });
+        
+        // Add to cart
+        document.querySelectorAll('.product-card').forEach(card => {
+            card.addEventListener('click', function() {
+                if (this.classList.contains('out-of-stock')) return;
+                
+                const product = JSON.parse(this.dataset.product);
+                const existingItem = cart.find(item => item.id === product.id);
+                
+                if (existingItem) {
+                    if (existingItem.quantity < product.stock) {
+                        existingItem.quantity++;
+                    } else {
+                        alert('Not enough stock available!');
+                        return;
+                    }
+                } else {
+                    cart.push({
+                        ...product,
+                        quantity: 1
+                    });
+                }
+                
+                updateCart();
+            });
+        });
+        
+        function updateCart() {
+            const cartItemsEl = document.getElementById('cartItems');
+            const subtotalEl = document.getElementById('subtotal');
+            const totalEl = document.getElementById('total');
+            const checkoutBtn = document.getElementById('checkoutBtn');
+            const clearCartBtn = document.getElementById('clearCartBtn');
+            
+            if (cart.length === 0) {
+                cartItemsEl.innerHTML = `
+                    <div class="empty-cart">
+                        <div class="empty-cart-icon">🛒</div>
+                        <p>Cart is empty<br><small>Click on products to add them</small></p>
+                    </div>
+                `;
+                checkoutBtn.disabled = true;
+                clearCartBtn.style.display = 'none';
+            } else {
+                cartItemsEl.innerHTML = cart.map(item => `
+                    <div class="cart-item">
+                        <div class="cart-item-info">
+                            <div class="cart-item-name">${item.name}</div>
+                            <div class="cart-item-price">₱${parseFloat(item.price).toFixed(2)} × ${item.quantity} = ₱${(item.price * item.quantity).toFixed(2)}</div>
+                        </div>
+                        <div class="cart-item-controls">
+                            <button class="qty-btn" onclick="decreaseQty(${item.id})">-</button>
+                            <span class="qty-display">${item.quantity}</span>
+                            <button class="qty-btn" onclick="increaseQty(${item.id})">+</button>
+                            <button class="remove-btn" onclick="removeItem(${item.id})">🗑️</button>
+                        </div>
+                    </div>
+                `).join('');
+                checkoutBtn.disabled = false;
+                clearCartBtn.style.display = 'block';
+            }
+            
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            subtotalEl.textContent = '₱' + subtotal.toFixed(2);
+            totalEl.textContent = '₱' + subtotal.toFixed(2);
+        }
+        
+        function increaseQty(productId) {
+            const item = cart.find(i => i.id === productId);
+            if (item && item.quantity < item.stock) {
+                item.quantity++;
+                updateCart();
+            } else {
+                alert('Not enough stock available!');
+            }
+        }
+        
+        function decreaseQty(productId) {
+            const item = cart.find(i => i.id === productId);
+            if (item) {
+                item.quantity--;
+                if (item.quantity === 0) {
+                    removeItem(productId);
+                } else {
+                    updateCart();
+                }
+            }
+        }
+        
+        function removeItem(productId) {
+            cart = cart.filter(i => i.id !== productId);
+            updateCart();
+        }
+        
+        document.getElementById('clearCartBtn').addEventListener('click', function() {
+            if (confirm('Are you sure you want to clear the cart?')) {
+                cart = [];
+                updateCart();
+            }
+        });
+        
+        document.getElementById('checkoutBtn').addEventListener('click', function() {
+            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const cash = prompt(`Total: ₱${total.toFixed(2)}\n\nEnter cash tendered:`);
+            
+            if (cash === null) return;
+            
+            const cashAmount = parseFloat(cash);
+            if (isNaN(cashAmount) || cashAmount < total) {
+                alert('Invalid amount or insufficient cash!');
+                return;
+            }
+            
+            const change = cashAmount - total;
+            
+            // Process checkout
+            fetch('process_sale.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    items: cart,
+                    total: total,
+                    cash: cashAmount,
+                    change: change
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`Sale completed!\n\nTotal: ₱${total.toFixed(2)}\nCash: ₱${cashAmount.toFixed(2)}\nChange: ₱${change.toFixed(2)}`);
+                    cart = [];
+                    updateCart();
+                    location.reload();
+                } else {
+                    alert('Error processing sale: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Error processing sale. Please try again.');
+                console.error(error);
+            });
+        });
+    </script>
+</body>
+</html>
+<?php
+$content = ob_get_clean();
+echo $content;
+
