@@ -599,86 +599,146 @@ ob_start();
             border-top: 1px solid var(--border-color);
         }
         
-        /* Print Styles */
+        /* Enhanced Print Styles */
         @media print {
             @page {
-                margin: 0.5in;
+                margin: 1in 0.5in;
                 size: A4 portrait;
             }
             
+            * {
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+            
             body {
-                margin: 0;
-                padding: 0;
+                margin: 0 !important;
+                padding: 0 !important;
                 background: white !important;
+                font-family: 'Courier New', monospace !important;
             }
             
             body * {
-                visibility: hidden;
+                visibility: hidden !important;
             }
             
-            .receipt-container, .receipt-container * {
-                visibility: visible;
+            .receipt-container, 
+            .receipt-container * {
+                visibility: visible !important;
             }
             
             .receipt-container {
-                position: absolute;
-                left: 50%;
-                top: 20%;
-                transform: translateX(-50%);
-                width: 80mm;
-                max-width: 300px;
+                position: absolute !important;
+                left: 50% !important;
+                top: 15% !important;
+                transform: translateX(-50%) !important;
+                width: 80mm !important;
+                max-width: 320px !important;
+                min-height: 400px !important;
                 box-shadow: none !important;
-                border: 1px solid #000 !important;
+                border: 2px solid #000 !important;
                 background: white !important;
-                padding: 15mm !important;
+                padding: 20px !important;
                 font-size: 12px !important;
-                line-height: 1.4 !important;
+                line-height: 1.5 !important;
+                color: #000 !important;
             }
             
-            .modal-header, .modal-footer, .btn-close, .modal-backdrop {
+            /* Hide modal elements */
+            .modal, .modal-dialog, .modal-content,
+            .modal-header, .modal-footer, .modal-backdrop,
+            .btn-close, .navbar, .pos-wrapper {
                 display: none !important;
+                visibility: hidden !important;
+            }
+            
+            /* Receipt Header Styles */
+            .receipt-header {
+                text-align: center !important;
+                border-bottom: 2px dashed #000 !important;
+                padding-bottom: 15px !important;
+                margin-bottom: 15px !important;
             }
             
             .receipt-header h4 {
                 color: #000 !important;
-                font-size: 16px !important;
-                margin-bottom: 8px !important;
+                font-size: 18px !important;
+                font-weight: bold !important;
+                margin: 0 0 10px 0 !important;
             }
             
             .receipt-header p {
                 color: #000 !important;
-                font-size: 11px !important;
-                margin: 2px 0 !important;
+                font-size: 12px !important;
+                margin: 3px 0 !important;
+            }
+            
+            /* Receipt Items */
+            .receipt-items {
+                margin-bottom: 15px !important;
+            }
+            
+            .receipt-item {
+                display: flex !important;
+                justify-content: space-between !important;
+                margin-bottom: 8px !important;
+                padding: 2px 0 !important;
             }
             
             .receipt-item-name {
                 color: #000 !important;
                 font-size: 11px !important;
+                flex: 1 !important;
             }
             
-            .receipt-item-price, .receipt-total-item.final-total {
+            .receipt-item-price {
                 color: #000 !important;
                 font-size: 11px !important;
+                font-weight: bold !important;
+                text-align: right !important;
+                min-width: 60px !important;
+            }
+            
+            /* Receipt Footer */
+            .receipt-footer {
+                border-top: 2px dashed #000 !important;
+                padding-top: 15px !important;
+            }
+            
+            .receipt-total-section {
+                margin-bottom: 15px !important;
+            }
+            
+            .receipt-total-item {
+                display: flex !important;
+                justify-content: space-between !important;
+                margin-bottom: 5px !important;
+                font-size: 12px !important;
+                color: #000 !important;
             }
             
             .receipt-total-item.final-total {
-                font-size: 14px !important;
+                font-size: 16px !important;
                 font-weight: bold !important;
+                border-top: 1px solid #000 !important;
+                padding-top: 8px !important;
+                margin-top: 8px !important;
             }
             
             .receipt-thank-you {
+                text-align: center !important;
                 color: #000 !important;
-                font-size: 10px !important;
+                font-size: 11px !important;
+                margin-top: 15px !important;
             }
             
             .receipt-timestamp {
+                text-align: center !important;
                 color: #666 !important;
-                font-size: 9px !important;
-            }
-            
-            /* Hide all other page elements */
-            .navbar, .pos-wrapper, .modal, .modal-dialog {
-                display: none !important;
+                font-size: 10px !important;
+                margin-top: 10px !important;
+                padding-top: 10px !important;
+                border-top: 1px solid #ccc !important;
             }
         }
         
