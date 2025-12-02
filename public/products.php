@@ -95,22 +95,15 @@ if (isset($_GET['edit'])) {
     $editProduct = $stmt->fetch();
 }
 
-// Handle reactivate
-if (isset($_GET['reactivate'])) {
-    $id = (int)$_GET['reactivate'];
-    $stmt = $pdo->prepare('UPDATE products SET is_active = 1 WHERE id = :id');
-    $stmt->execute([':id' => $id]);
-    $flashMessage = ['type' => 'success', 'text' => 'Product reactivated successfully.'];
-    header('Location: products.php');
-    exit;
-}
 
-// List products with category name
+
+// List only active products with category name
 $productsStmt = $pdo->query('
     SELECT p.*, c.name AS category_name 
     FROM products p 
     JOIN categories c ON p.category_id = c.id 
-    ORDER BY p.is_active DESC, p.name
+    WHERE p.is_active = 1
+    ORDER BY p.name
 ');
 $products = $productsStmt->fetchAll();
 

@@ -177,26 +177,7 @@ ob_start();
             <?php endif; ?>
         </div>
 
-        <!-- Quick Actions -->
-        <div class="dashboard-card">
-            <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--text-primary);">
-                ⚡ Quick Actions
-            </h3>
-            <div class="d-grid gap-2">
-                <a href="products.php" class="btn btn-primary">
-                    📦 Manage Products
-                </a>
-                <a href="categories.php" class="btn btn-outline-primary">
-                    📁 Manage Categories
-                </a>
-                <a href="pos.php" class="btn btn-outline-primary">
-                    💳 Open POS
-                </a>
-                <a href="users.php" class="btn btn-outline-primary">
-                    👥 Manage Users
-                </a>
-            </div>
-        </div>
+
     </div>
 </div>
 
