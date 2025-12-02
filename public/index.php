@@ -1,7 +1,6 @@
 <?php
 
 require __DIR__ . '/../app/auth_only.php';
-require __DIR__ . '/../app/Auth.php';
 
 // Redirect based on role:
 // - Admin  -> admin dashboard (back office)

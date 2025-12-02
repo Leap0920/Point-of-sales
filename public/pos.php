@@ -1,8 +1,6 @@
 <?php
 
 require __DIR__ . '/../app/auth_only.php';
-require __DIR__ . '/../app/Auth.php';
-require __DIR__ . '/../app/Database.php';
 
 $pdo = Database::getConnection();
 $pageTitle = 'Point of Sale';
