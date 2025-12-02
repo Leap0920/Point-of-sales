@@ -601,28 +601,84 @@ ob_start();
         
         /* Print Styles */
         @media print {
+            @page {
+                margin: 0.5in;
+                size: A4 portrait;
+            }
+            
+            body {
+                margin: 0;
+                padding: 0;
+                background: white !important;
+            }
+            
             body * {
                 visibility: hidden;
             }
+            
             .receipt-container, .receipt-container * {
                 visibility: visible;
             }
+            
             .receipt-container {
                 position: absolute;
-                left: 0;
-                top: 0;
+                left: 50%;
+                top: 20%;
+                transform: translateX(-50%);
                 width: 80mm;
-                box-shadow: none;
-                border: none;
+                max-width: 300px;
+                box-shadow: none !important;
+                border: 1px solid #000 !important;
+                background: white !important;
+                padding: 15mm !important;
+                font-size: 12px !important;
+                line-height: 1.4 !important;
             }
-            .modal-header, .modal-footer, .btn-close {
+            
+            .modal-header, .modal-footer, .btn-close, .modal-backdrop {
                 display: none !important;
             }
+            
             .receipt-header h4 {
                 color: #000 !important;
+                font-size: 16px !important;
+                margin-bottom: 8px !important;
             }
+            
+            .receipt-header p {
+                color: #000 !important;
+                font-size: 11px !important;
+                margin: 2px 0 !important;
+            }
+            
+            .receipt-item-name {
+                color: #000 !important;
+                font-size: 11px !important;
+            }
+            
             .receipt-item-price, .receipt-total-item.final-total {
                 color: #000 !important;
+                font-size: 11px !important;
+            }
+            
+            .receipt-total-item.final-total {
+                font-size: 14px !important;
+                font-weight: bold !important;
+            }
+            
+            .receipt-thank-you {
+                color: #000 !important;
+                font-size: 10px !important;
+            }
+            
+            .receipt-timestamp {
+                color: #666 !important;
+                font-size: 9px !important;
+            }
+            
+            /* Hide all other page elements */
+            .navbar, .pos-wrapper, .modal, .modal-dialog {
+                display: none !important;
             }
         }
         
