@@ -617,7 +617,7 @@ ob_start();
     /* Enhanced Print Styles */
     @media print {
         @page {
-            margin: 1in 0.5in;
+            margin: 0.5in;
             size: A4 portrait;
         }
 
@@ -633,23 +633,48 @@ ob_start();
             font-family: 'Courier New', monospace !important;
         }
 
-        body * {
-            visibility: hidden !important;
+        /* Hide everything except receipt */
+        .pos-wrapper,
+        .navbar,
+        .modal-header,
+        .modal-footer,
+        .btn-close {
+            display: none !important;
         }
 
-        .receipt-container,
-        .receipt-container * {
-            visibility: visible !important;
+        /* Show only the receipt modal */
+        .modal {
+            position: static !important;
+            display: block !important;
+            padding: 0 !important;
+        }
+
+        .modal-dialog {
+            position: static !important;
+            margin: 0 auto !important;
+            max-width: 100% !important;
+            transform: none !important;
+        }
+
+        .modal-content {
+            border: none !important;
+            box-shadow: none !important;
+        }
+
+        .modal-body {
+            padding: 0 !important;
+        }
+
+        .modal-backdrop {
+            display: none !important;
         }
 
         .receipt-container {
-            position: absolute !important;
-            left: 50% !important;
-            top: 15% !important;
-            transform: translateX(-50%) !important;
+            position: static !important;
             width: 80mm !important;
-            max-width: 320px !important;
-            min-height: 400px !important;
+            max-width: 80mm !important;
+            margin: 0 auto !important;
+            transform: none !important;
             box-shadow: none !important;
             border: 2px solid #000 !important;
             background: white !important;
@@ -657,20 +682,6 @@ ob_start();
             font-size: 12px !important;
             line-height: 1.5 !important;
             color: #000 !important;
-        }
-
-        /* Hide modal elements */
-        .modal,
-        .modal-dialog,
-        .modal-content,
-        .modal-header,
-        .modal-footer,
-        .modal-backdrop,
-        .btn-close,
-        .navbar,
-        .pos-wrapper {
-            display: none !important;
-            visibility: hidden !important;
         }
 
         /* Receipt Header Styles */
