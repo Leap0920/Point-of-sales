@@ -722,6 +722,13 @@ body {
 
 
 .product-grid {
+  @media (min-width: 1600px) {
+    .product-grid {
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 2rem;
+      padding: 3vw 3vw;
+    }
+  }
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 1.5rem;
@@ -758,6 +765,12 @@ body {
 
 
 .product-item {
+  @media (min-width: 1600px) {
+    .product-item {
+      padding: 2em 1.5em;
+      font-size: clamp(1.2rem, 2vw, 1.5rem);
+    }
+  }
   background: white;
   border-radius: var(--border-radius-sm);
   padding: 1.2em 1em;
