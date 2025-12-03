@@ -620,13 +620,36 @@ ob_start();
 
     /* Enhanced Print Styles */
     @media print {
+                        /* Hide Print Receipt button during print */
+                        .receipt-modal .btn-primary[onclick],
+                        .receipt-modal .btn-primary {
+                            display: none !important;
+                        }
+
+                        /* Hide browser print header/footer (date, title, URL, page number) */
+                        @page {
+                            margin: 0.5in;
+                            size: 80mm auto;
+                        }
+                        body {
+                            -webkit-print-color-adjust: exact !important;
+                            color-adjust: exact !important;
+                        }
                 /* Hide modal footer during print for clean layout */
                 .receipt-modal .modal-footer {
                     display: none !important;
                 }
         @page {
-            margin: 0.5in;
-            size: A4 portrait;
+            margin: 0;
+            size: 80mm auto;
+        }
+        body {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: white !important;
+            font-family: 'Courier New', monospace !important;
+            -webkit-print-color-adjust: exact !important;
+            color-adjust: exact !important;
         }
 
         * {
