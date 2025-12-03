@@ -32,9 +32,8 @@ ob_start();
 <style>
     .main-content {
         padding: 0 !important;
-        height: calc(100vh - 80px);
-        overflow: hidden;
-        max-height: calc(100vh - 80px);
+        height: auto;
+        /* Remove overflow: hidden and max-height to allow scrolling */
     }
 
     .pos-wrapper {
@@ -95,8 +94,8 @@ ob_start();
         display: grid;
         grid-template-columns: 1fr 350px;
         gap: 0;
-        overflow: hidden;
         min-height: 0;
+        /* Remove overflow: hidden and max-height to allow child scrolling */
     }
 
     .products-section {
@@ -210,7 +209,7 @@ ob_start();
         box-shadow: -2px 0 10px rgba(0, 0, 0, 0.05);
         height: 100%;
         max-height: 100%;
-        overflow: hidden;
+        overflow-y: auto;
     }
 
     .cart-header {
