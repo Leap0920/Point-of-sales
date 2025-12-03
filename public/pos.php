@@ -635,9 +635,13 @@ ob_start();
                             -webkit-print-color-adjust: exact !important;
                             color-adjust: exact !important;
                         }
-                /* Hide modal footer during print for clean layout */
+                /* Modal footer: align buttons horizontally */
                 .receipt-modal .modal-footer {
-                    display: none !important;
+                    display: flex !important;
+                    flex-direction: row !important;
+                    justify-content: flex-end !important;
+                    align-items: center !important;
+                    gap: 1rem !important;
                 }
         @page {
             margin: 0;
@@ -873,8 +877,14 @@ ob_start();
                 </div>
             </div>
             <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    ✕ Close
+                </button>
                 <button type="button" class="btn btn-primary" onclick="printReceipt()">
                     🖨️ Print Receipt
+                </button>
+                <button type="button" class="btn btn-success" data-bs-dismiss="modal" onclick="location.reload()">
+                    ✓ New Transaction
                 </button>
             </div>
         </div>
