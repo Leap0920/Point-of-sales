@@ -987,7 +987,6 @@ ob_start();
                 });
             }
             
-            console.log('Cart after adding:', cart);
             updateCart();
         });
     });
@@ -1015,7 +1014,7 @@ ob_start();
                 <div class="cart-item">
                     <div class="cart-item-info">
                         <div class="cart-item-name">${item.name}</div>
-                        <div class="cart-item-price">₱${parseFloat(item.price).toFixed(2)} × ${item.quantity} = ₱${(item.price * item.quantity).toFixed(2)}</div>
+                        <div class="cart-item-price">₱${(item.price * item.quantity).toFixed(2)}</div>
                     </div>
                     <div class="cart-item-controls">
                         <button class="qty-btn decrease-btn" data-action="decrease" data-id="${item.id}" type="button">−</button>
@@ -1037,35 +1036,19 @@ ob_start();
 
     // Event delegation for cart buttons
     document.getElementById('cartItems').addEventListener('click', function(e) {
-        console.log('Cart clicked:', e.target);
-        
         const btn = e.target.closest('button[data-action]');
-        if (!btn) {
-            console.log('No button found');
-            return;
-        }
+        if (!btn) return;
         
         const action = btn.getAttribute('data-action');
         const productId = parseInt(btn.getAttribute('data-id'));
         
-        console.log('Button clicked - Action:', action, 'Product ID:', productId);
-        
         let changed = false;
         
         if (action === 'increase') {
-            console.log('Current cart:', cart);
-            console.log('Looking for product ID:', productId, 'Type:', typeof productId);
-            cart.forEach(item => {
-                console.log('Cart item ID:', item.id, 'Type:', typeof item.id);
-            });
             const item = cart.find(i => i.id === productId);
-            console.log('Found item:', item);
             if (item) {
                 item.quantity++;
                 changed = true;
-                console.log('Increased quantity to:', item.quantity);
-            } else {
-                console.log('Item not found in cart!');
             }
         } else if (action === 'decrease') {
             const item = cart.find(i => i.id === productId);
@@ -1073,22 +1056,15 @@ ob_start();
                 item.quantity--;
                 if (item.quantity <= 0) {
                     cart = cart.filter(i => i.id !== productId);
-                    console.log('Removed item from cart');
-                } else {
-                    console.log('Decreased quantity to:', item.quantity);
                 }
                 changed = true;
-            } else {
-                console.log('Item not found in cart for decrease!');
             }
         } else if (action === 'remove') {
             cart = cart.filter(i => i.id !== productId);
             changed = true;
-            console.log('Removed item from cart');
         }
         
         if (changed) {
-            console.log('Updating cart...');
             updateCart();
         }
     });
