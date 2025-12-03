@@ -2,24 +2,6 @@
 
 A comprehensive web-based point of sale system designed specifically for restaurant operations with role-based access control, inventory management, and sales analytics.
 
-## 📋 Table of Contents
-
-- [Overview](#overview)
-- [Features](#features)
-- [Technology Stack](#technology-stack)
-- [Installation](#installation)
-- [Database Setup](#database-setup)
-- [User Roles](#user-roles)
-- [System Architecture](#system-architecture)
-- [File Structure](#file-structure)
-- [API Endpoints](#api-endpoints)
-- [Security Features](#security-features)
-- [Usage Guide](#usage-guide)
-- [Screenshots](#screenshots)
-- [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
-- [License](#license)
-
 ## 🎯 Overview
 
 This Restaurant POS System is a modern, web-based solution that enables restaurants to efficiently manage their daily operations. The system provides separate interfaces for administrators and cashiers, ensuring appropriate access levels while maintaining data security and operational efficiency.
@@ -109,7 +91,7 @@ This Restaurant POS System is a modern, web-based solution that enables restaura
 ### Step 2: Clone/Download Project
 ```bash
 # Clone the repository (if using Git)
-git clone [repository-url]
+https://github.com/Leap0920/Point-of-sales.git
 
 # Or download and extract the ZIP file to:
 C:\xampp\htdocs\Point-of-sales\
@@ -362,24 +344,6 @@ Point-of-sales/
 - Out-of-stock items are disabled
 - Low stock warnings displayed
 
-## 📱 Screenshots
-
-### Admin Dashboard
-![Admin Dashboard](docs/screenshots/admin-dashboard.png)
-*Comprehensive analytics and quick access to all system features*
-
-### POS Terminal
-![POS Terminal](docs/screenshots/pos-terminal.png)
-*Intuitive product selection with real-time cart management*
-
-### Product Management
-![Product Management](docs/screenshots/product-management.png)
-*Easy product creation with image upload support*
-
-### Transaction History
-![Transaction History](docs/screenshots/transactions.png)
-*Detailed transaction tracking with expandable item details*
-
 ## 🔧 Troubleshooting
 
 ### Common Issues
@@ -470,37 +434,6 @@ Point-of-sales/
 - Validate form submissions
 - Test error handling scenarios
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 📞 Support
-
-For support and questions:
-- Create an issue in the repository
-- Check the troubleshooting section
-- Review the documentation
-- Contact the development team
-
-## 🔄 Version History
-
-### v1.0.0 (Current)
-- Initial release
-- Basic POS functionality
-- Admin dashboard
-- User management
-- Product management with images
-- Transaction processing
-- Authentication system
-- Responsive design
-
-### Planned Features (v1.1.0)
-- Email notifications
-- Advanced reporting
-- Inventory alerts
-- Multi-location support
-- API documentation
-- Mobile app integration
 
 ---
 
