@@ -942,10 +942,7 @@ ob_start();
                                     alt="<?= htmlspecialchars($product['name']) ?>"
                                     style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;">
                             <?php else: ?>
-                                <?php
-                                $icons = ['🍔', '🍕', '🍗', '🥤', '🍰', '🍜', '🍱', '🌮', '🍦', '☕'];
-                                echo $icons[$product['id'] % count($icons)];
-                                ?>
+                                <?= getFoodEmoji($product['name']) ?>
                             <?php endif; ?>
                         </div>
                         <div class="product-name"><?= htmlspecialchars($product['name']) ?></div>
@@ -1309,4 +1306,49 @@ ob_start();
 <?php
 $content = ob_get_clean();
 require __DIR__ . '/../views/layout.php';
+
+function getFoodEmoji($name) {
+    $name = strtolower($name);
+    $emojiMap = [
+        'cake' => '🍰',
+        'chocolate' => '🍫',
+        'fruit' => '🍎',
+        'salad' => '🥗',
+        'ice cream' => '🍦',
+        'mcfloat' => '🥤',
+        'coffee' => '☕',
+        'juice' => '🧃',
+        'tea' => '🍵',
+        'soft drink' => '🥤',
+        'burger' => '🍔',
+        'meal' => '🍱',
+        'pizza' => '🍕',
+        'chicken' => '🍗',
+        'noodle' => '🍜',
+        'taco' => '🌮',
+        'rice' => '🍚',
+        'soup' => '🍲',
+        'sandwich' => '🥪',
+        'dessert' => '🍮',
+        'drink' => '🥤',
+        'hotdog' => '🌭',
+        'fish' => '🐟',
+        'egg' => '🥚',
+        'shrimp' => '🍤',
+        'steak' => '🥩',
+        'bacon' => '🥓',
+        'donut' => '🍩',
+        'bread' => '🍞',
+        'cheese' => '🧀',
+        'wine' => '🍷',
+        'beer' => '🍺',
+        'water' => '💧',
+    ];
+    foreach ($emojiMap as $key => $emoji) {
+        if (strpos($name, $key) !== false) {
+            return $emoji;
+        }
+    }
+    return '🍽️'; // Default emoji
+}
 
