@@ -620,6 +620,11 @@ ob_start();
 
     /* Enhanced Print Styles */
     @media print {
+                                /* Hide Close and New Transaction buttons during print */
+                                .receipt-modal .btn-outline-secondary,
+                                .receipt-modal .btn-success {
+                                    display: none !important;
+                                }
                         /* Hide Print Receipt button during print */
                         .receipt-modal .btn-primary[onclick],
                         .receipt-modal .btn-primary {
@@ -1247,7 +1252,7 @@ ob_start();
                     <h4>🍽️ Restaurant POS System</h4>
                     <p><strong>Receipt #${saleId}</strong></p>
                     <p>${now.toLocaleDateString()} ${now.toLocaleTimeString()}</p>
-                    <p>Cashier: <?= htmlspecialchars($currentUser['name']) ?></p>
+                    <p>Cashier</p>
                 </div>
                 
                 <div class="receipt-items">
