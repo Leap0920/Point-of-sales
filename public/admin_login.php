@@ -21,8 +21,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Please enter username and password.';
     } else {
         if (Auth::login($username, $password)) {
-            header('Location: index.php');
-            exit;
+            // Check if user is an admin
+            $currentUser = Auth::user();
+            if ($currentUser && $currentUser['role'] === 'Admin') {
+                header('Location: index.php');
+                exit;
+            } else {
+                // Not an admin, logout and show error
+                Auth::logout();
+                $error = 'Access denied. This login is for administrators only. Cashiers should use the cashier login.';
+            }
         } else {
             $error = 'Invalid username or password. Please try again.';
         }
