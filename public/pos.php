@@ -515,7 +515,11 @@ ob_start();
     /* Enhanced Receipt Modal */
     .receipt-modal .modal-dialog {
         max-width: 450px;
-        margin-top: 2rem;
+        margin-top: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
     }
 
     .receipt-container {
@@ -636,17 +640,27 @@ ob_start();
         /* Hide everything except receipt */
         .pos-wrapper,
         .navbar,
-        .modal-header,
-        .modal-footer,
         .btn-close {
             display: none !important;
         }
+        /* Show modal-header and modal-footer for receipt modal during print */
+        .receipt-modal .modal-header,
+        .receipt-modal .modal-footer {
+            display: flex !important;
+        }
 
-        /* Show only the receipt modal */
+        /* Show only the receipt modal, center vertically */
         .modal {
-            position: static !important;
-            display: block !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
             padding: 0 !important;
+            background: white !important;
         }
 
         .modal-dialog {
@@ -654,6 +668,10 @@ ob_start();
             margin: 0 auto !important;
             max-width: 100% !important;
             transform: none !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            min-height: 100vh !important;
         }
 
         .modal-content {
@@ -818,8 +836,7 @@ ob_start();
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header"
-                style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">
-                <h5 class="modal-title">🧾 Transaction Receipt</h5>
+                style="background: none; color: #222; border-bottom: none; justify-content: center;">
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" style="padding: 1.5rem;">
@@ -941,6 +958,18 @@ ob_start();
 
 <script>
     // Cart management
+
+    // Print Receipt with proper modal visibility
+    function printReceipt() {
+        const receiptModal = document.getElementById('receiptModal');
+        // Ensure modal is visible
+        if (!receiptModal.classList.contains('show')) {
+            new bootstrap.Modal(receiptModal).show();
+        }
+        setTimeout(() => {
+            window.print();
+        }, 300); // Allow modal to render
+    }
     let cart = [];
 
     // Store product data for stock checking
