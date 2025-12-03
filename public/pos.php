@@ -620,6 +620,10 @@ ob_start();
 
     /* Enhanced Print Styles */
     @media print {
+                /* Hide modal footer during print for clean layout */
+                .receipt-modal .modal-footer {
+                    display: none !important;
+                }
         @page {
             margin: 0.5in;
             size: A4 portrait;
@@ -630,6 +634,7 @@ ob_start();
             color-adjust: exact !important;
         }
 
+        
         body {
             margin: 0 !important;
             padding: 0 !important;
@@ -845,14 +850,8 @@ ob_start();
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                    ✕ Close
-                </button>
-                <button type="button" class="btn btn-primary" onclick="window.print()">
+                <button type="button" class="btn btn-primary" onclick="printReceipt()">
                     🖨️ Print Receipt
-                </button>
-                <button type="button" class="btn btn-success" data-bs-dismiss="modal" onclick="location.reload()">
-                    ✓ New Transaction
                 </button>
             </div>
         </div>
